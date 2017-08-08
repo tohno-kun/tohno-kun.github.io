@@ -12,6 +12,4 @@ $('#download-json').on("click", "button", function() {
 
 $.get('https://github.com/tohno-kun/bilibili-playlist/tree/master/lists', function(data) {
 	console.log(data);
-	var a = $(data).html();
-	console.log(data);
-});
+}, "html");

@@ -9,3 +9,25 @@ $('#download-json').on("click", "button", function() {
     });
 
 });
+
+$.ajax({
+    type: "get",
+	url: "https://api.github.com/repos/tohno-kun/bilibili-playlist/contents/lists",
+	success: function(data){
+		var lists = eval(data);
+		for (var i = 0; i < lists.length; i++) {
+			var item = $('<button></button>').text(lists[i]['name'].split('.')[0]);
+			$('#download-json').append(item);
+		}
+
+	}
+});
+
+
+$.ajax({
+	url: 'https://github.com/tohno-kun/bilibili-playlist/tree/master/lists',
+	success: function(data){
+		var re_data = /.*<time-ago.*>(.*)<\/time-ago>.*/g.exec(data);	
+		console.log(re_data);
+	}
+});

@@ -1,4 +1,4 @@
-var url = "https://raw.githubusercontent.com/tohno-kun/bilibili-playlist/master/lists/";
+var url = "https://raw.githubusercontent.com/tohno-kun/tohno-kun.github.io/master/lists/";
 
 $('#download-json').on("click", "button", function() {
     var name = $(this).text();
@@ -12,7 +12,7 @@ $('#download-json').on("click", "button", function() {
 
 $.ajax({
     type: "get",
-	url: "https://api.github.com/repos/tohno-kun/bilibili-playlist/contents/lists",
+	url: "https://api.github.com/repos/tohno-kun/tohno-kun.github.io/contents/lists",
 	success: function(data){
 		var lists = eval(data);
 		for (var i = 0; i < lists.length; i++) {
@@ -23,11 +23,11 @@ $.ajax({
 	}
 });
 
-
 $.ajax({
-	url: 'https://github.com/tohno-kun/bilibili-playlist/tree/master/lists',
+	url: 'https://github.com/tohno-kun/tohno-kun.github.io/tree/master/lists',
 	success: function(data){
-		var re_data = /.*<time-ago.*>(.*)<\/time-ago>.*/g.exec(data);	
-		console.log(re_data);
+		// eval(data);
+		// var re_data = /.*<time-ago.*>(.*)<\/time-ago>.*/g.exec(data);	
+		console.log(data);
 	}
 });

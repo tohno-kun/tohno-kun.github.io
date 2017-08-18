@@ -5,3 +5,5 @@
 欢迎将您做好的列表发给我（toonolam@gmail.com），以分享给更多人使用。
 
 [Download Page](https://tohno-kun.github.io/)
+
+[五子棋小游戏](https://tohno-kun.github.io/chess.html)

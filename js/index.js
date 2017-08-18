@@ -22,12 +22,3 @@ $.ajax({
 
 	}
 });
-
-$.ajax({
-	url: 'https://github.com/tohno-kun/bilibili-playlist/file-list/master/lists',
-	success: function(data){
-		// eval(data);
-		// var re_data = /.*<time-ago.*>(.*)<\/time-ago>.*/g.exec(data);	
-		console.log(data);
-	}
-});

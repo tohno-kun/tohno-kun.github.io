@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+
+<head>
+    <meta charset="utf-8">
+    <title>五子棋小游戏</title>
+    <style type="text/css">
+    * {
+        margin: 0;
+        padding: 0;
+    }
+    
+    canvas:nth-child(1) {
+        background-color: #CFAF74;
+        position: absolute;
+    }
+    
+    canvas:nth-child(2) {
+        position: absolute;
+        left: 15px;
+        top: 15px;
+        cursor: pointer;
+    }
+    
+    canvas:nth-child(3) {
+        position: absolute;
+        left: 15px;
+        top: 15px;
+        cursor: pointer;
+    }
+    
+    canvas:nth-child(4) {
+        position: absolute;
+        left: 15px;
+        top: 15px;
+        cursor: pointer;
+    }
+    </style>
+</head>
+
+<body>
+    <canvas id="chessboard" width="600px" height="600px"></canvas>
+    <canvas id="chess-pieces" width="570px" height="570px"></canvas>
+    <canvas id="before-game" width="570px" height="570px"></canvas>
+    <canvas id="after-game" width="570px" height="570px"></canvas>
+    <script type="text/javascript">
+    var chess = document.getElementById('chessboard');
+    var cb = chess.getContext("2d");
+    drawChessboard(); // 绘制棋盘
+    function drawChessboard() {
+        cb.strokeStyle = "#000";
+        cb.lineWidth = 3;
+        for (var i = 0; i < 2; i++) {
+            cb.moveTo(30 + i * 540, 30);
+            cb.lineTo(30 + i * 540, 570);
+            cb.moveTo(30, 30 + i * 540);
+            cb.lineTo(570, 30 + i * 540);
+            cb.stroke();
+
+        }
+        cb.lineWidth = 1;
+        for (var i = 1; i < 19; i++) {
+            cb.moveTo(30 + i * 30, 30);
+            cb.lineTo(30 + i * 30, 570);
+            cb.moveTo(30, 30 + i * 30);
+            cb.lineTo(570, 30 + i * 30);
+            cb.stroke();
+        }
+        for (var i = 0; i < 3; i++) {
+            for (var j = 0; j < 3; j++) {
+                cb.beginPath();
+                cb.arc(120 + i * 6 * 30, 120 + j * 6 * 30, 6, 0, 2 * Math.PI);
+                cb.closePath();
+                cb.fillStyle = "#000";
+                cb.fill();
+            }
+        }
+        for (var i = 0; i < 2; i++) {
+            for (var j = 0; j < 2; j++) {
+                cb.beginPath();
+                cb.arc(30 + i * 540, 30 + j * 540, 1.5, 0, 2 * Math.PI);
+                cb.closePath();
+                cb.fillStyle = "#000";
+                cb.fill();
+            }
+        }
+    }
+    </script>
+    <script type="text/javascript">
+    var before_game = document.getElementById("before-game");
+    var bf = before_game.getContext("2d");
+    var after_game = document.getElementById("after-game");
+    var af = after_game.getContext("2d");
+    var chess_pieces = document.getElementById("chess-pieces");
+    var cp = chess_pieces.getContext("2d");
+    var game_over = false;
+    var p1_color = true; // p1 is black
+    var round = true; // p1
+    var p2_chose = false; // p2 is chosen?
+    var p2_id = true; // p2 is man(!computer)
+    var winner = "Player 1";
+    var chessBoard = [];
+    // ai最大值算法
+    var wins = [];
+    var count = 0;
+    var myWin = [];
+    var computerWin = [];
+
+    reset();
+
+    before_game.onclick = function(e) { // 选择执棋
+        var ox = e.offsetX;
+        var oy = e.offsetY;
+        var x = Math.floor(ox / 30);
+        var y = Math.floor(oy / 30);
+        if (!p2_chose) {
+            if (x == 8 && y == 9) { // chose man
+                p2_id = true;
+                p2_chose = true;
+                choseChessColor();
+            } else if (x == 10 && y == 9) { // chose computer
+                p2_id = false;
+                p2_chose = true;
+                choseChessColor();
+            } else {
+                return;
+            }
+        } else {
+            if (x == 8 && y == 9) {
+                bf.clearRect(0, 0, 570, 570); // 清空落子   
+                // 选择黑棋
+                p1_color = true;
+                round = true;
+            } else if (x == 10 && y == 9) {
+                bf.clearRect(0, 0, 570, 570); // 清空落子   
+                // 选择白棋
+                p1_color = false;
+                round = false;
+                if (!p2_id) { // 当电脑执黑棋，电脑先下一步
+                    computerAI(9, 9, !p1_color);
+                    game_over = checkWin(chessBoard) || false;
+                    if (game_over) {
+                        gameOver();
+                        return;
+                    }
+                    round = !round;
+                }
+            } else {
+                return;
+            }
+            before_game.style.display = "none";
+        }
+    }
+    chess_pieces.onclick = function(e) { // 我的回合落子
+        var ox = e.offsetX;
+        var oy = e.offsetY;
+        var x = Math.floor(ox / 30);
+        var y = Math.floor(oy / 30);
+        if (game_over) {
+            return;
+        }
+        if (round) { // p1回合
+            if (chessBoard[x][y]) {
+                return;
+            } else {
+                roundByP1(x, y, p1_color);
+                if (!game_over) {
+                    if (!p2_id) {
+                        roundByP2(x, y, !p1_color);
+                    }
+                }
+            }
+        } else if (!round) { // p2回合
+            if (chessBoard[x][y]) {
+                return;
+            } else {
+                roundByP2(x, y, !p1_color);
+            }
+            return;
+        }
+    }
+    after_game.onclick = function(e) {
+        af.clearRect(0, 0, 570, 570);
+        reset();
+    }
+
+    function roundByP1(x, y, p1_color) {
+        var p1 = (p1_color) ? 1 : 2;
+        chessBoard[x][y] = p1;
+        for (var k = 0; k < count; k++) {
+            if (wins[x][y][k]) {
+                myWin[k]++;
+                computerWin[k] = 6;
+            }
+        }
+        drawChessPiece(cp, x * 30, y * 30, p1_color);
+        game_over = checkWin(chessBoard) || false;
+        if (game_over) {
+            gameOver();
+            return;
+        }
+        round = !round;
+    }
+
+    function roundByP2(x, y, p2_color) {
+        var p2 = (p2_color) ? 1 : 2;
+        if (p2_id) { // player 2 is man
+            chessBoard[x][y] = p2;
+            drawChessPiece(cp, x * 30, y * 30, p2_color);
+        } else { // player 2 is computer
+            computerAI(undefined, undefined, p2_color);
+        }
+        game_over = checkWin(chessBoard) || false;
+        if (game_over) {
+            gameOver();
+            return;
+        }
+        round = !round;
+    }
+
+    function computerAI(x, y, p2_color) { //定义计算机智能落子函数
+        var p2 = (p2_color) ? 1 : 2;
+        var myScore = [];
+        var computerScore = [];
+        var max = 0;
+        var u = 0,
+            v = 0;
+        for (var i = 0; i < 19; i++) {
+            myScore[i] = [];
+            computerScore[i] = [];
+            for (var j = 0; j < 19; j++) {
+                myScore[i][j] = 0;
+                computerScore[i][j] = 0;
+            }
+        }
+        for (var i = 0; i < 19; i += 1) {
+            for (var j = 0; j < 19; j += 1) {
+                if (chessBoard[i][j] == 0) {
+                    for (var k = 0; k < count; k++) {
+                        if (wins[i][j][k]) {
+                            if (myWin[k] == 1) {
+                                myScore[i][j] += 200;
+                            } else if (myWin[k] == 2) {
+                                myScore[i][j] += 400;
+                            } else if (myWin[k] == 3) {
+                                myScore[i][j] += 2000;
+                            } else if (myWin[k] == 4) {
+                                myScore[i][j] += 10000;
+                            }
+                            if (computerWin[k] == 1) {
+                                computerScore[i][j] += 210;
+                            } else if (computerWin[k] == 2) {
+                                computerScore[i][j] += 420;
+                            } else if (computerWin[k] == 3) {
+                                computerScore[i][j] += 2400;
+                            } else if (computerWin[k] == 4) {
+                                computerScore[i][j] += 20000;
+                            }
+                        }
+                    }
+                    if (myScore[i][j] > max) {
+                        max = myScore[i][j];
+                        u = i;
+                        v = j;
+                    } else if (myScore[i][j] == max) {
+                        if (computerScore[i][j] > computerScore[u][v]) {
+                            u = i;
+                            v = j;
+                        }
+                    }
+                    if (computerScore[i][j] > max) {
+                        max = computerScore[i][j];
+                        u = i;
+                        v = j;
+                    } else if (computerScore[i][j] == max) {
+                        if (myScore[i][j] > myScore[u][v]) {
+                            u = i;
+                            v = j;
+                        }
+                    }
+                }
+            }
+        }
+
+        for (var k = 0; k < count; k++) {
+            if (wins[u][v][k]) {
+                computerWin[k]++;
+                myWin[k] = 6;
+            }
+        }
+        var x = x || u;
+        var y = y || v;
+        chessBoard[x][y] = p2;
+        drawChessPiece(cp, x * 30, y * 30, p2_color);
+    }
+
+    function checkWin(chessBoard) {
+        var horizontal, vertical, main_diagonal, back_diagonal;
+
+        for (var i = 0; i < 19; i++) {
+            for (var j = 0; j < 19; j++) {
+                horizontal = [];
+                vertical = [];
+                main_diagonal = [];
+                back_diagonal = [];
+                if (chessBoard[i][j]) {
+                    for (var k = 0; k < 5; k++) {
+                        try { // 横向
+                            if (chessBoard[i + k][j]) {
+                                horizontal.push(chessBoard[i + k][j]);
+                            }
+                        } catch (e) {}
+                        try { // 斜角
+                            if (chessBoard[i + k][j + k]) {
+                                main_diagonal.push(chessBoard[i + k][j + k]);
+                            }
+                        } catch (e) {}
+                        try { // 竖向
+                            if (chessBoard[i][j + k]) {
+                                vertical.push(chessBoard[i][j + k]);
+                            }
+                        } catch (e) {}
+                        try { // 反斜角
+                            if (chessBoard[i - k][j + k]) {
+                                back_diagonal.push(chessBoard[i - k][j + k]);
+                            }
+                        } catch (e) {}
+                    }
+                    if (check5item(horizontal) || check5item(vertical) || check5item(main_diagonal) || check5item(back_diagonal)) {
+                        game_over = true;
+                        return game_over;
+                    }
+                }
+            }
+        }
+    }
+
+    function check5item(arr) {
+        if (arr.length < 5) {
+            return false;
+        }
+        var result = [],
+            hash = {};
+        for (var i = 0, elem;
+            (elem = arr[i]) != null; i++) {
+            if (!hash[elem]) {
+                result.push(elem);
+                hash[elem] = true;
+            }
+        }
+        if (result.length == 1) {
+            return (result[0] == 0) ? false : true;
+        } else {
+            return false;
+        }
+    }
+
+    function loadImage(canvas, x, y, src) {
+        var img = new Image();
+        img.src = src;
+        if (img.complete) {
+            canvas.drawImage(img, x, y, 30, 30);
+        } else {
+            img.onload = function() {
+                canvas.drawImage(img, x, y, 30, 30);
+            };
+            img.onerror = function() {};
+        };
+    }
+
+    function choseChessColor() {
+        bf.clearRect(0, 0, 570, 570); // 清空落子   
+        bf.rect(15, 15, 540, 540);
+        bf.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        bf.fill();
+        var x = 270;
+        var y = 270;
+        bf.font = "normal 45px 微软雅黑";
+        bf.fillStyle = 'rgba(255, 255, 255, 0.9)';
+        bf.fillText("请选择执黑棋或白棋", x - 190, y - 50);
+        drawChessPiece(bf, x + -30, y, true); // 画黑棋
+        drawChessPiece(bf, x + 30, y, false); // 画白棋
+    }
+
+    function gameOver() {
+        af.rect(15, 15, 540, 540);
+        af.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        af.fill();
+        after_game.style.display = "block";
+        af.font = "normal 45px 微软雅黑";
+        af.fillStyle = 'rgba(255, 255, 255, 0.9)';
+        af.fillText("Game Over !", 150, 150);
+        if (round) {
+            winner = "Player 1";
+        } else {
+            if (p2_id) {
+                winner = "Player 2";
+            } else {
+                winner = "Computer";
+            }
+        }
+        af.fillText("Winner is " + winner, 100, 250);
+        af.font = "normal 35px 微软雅黑";
+        af.fillText("点击屏幕开始新的一局", 115, 425);
+
+    }
+
+    function drawChessPiece(canvas, x, y, chess_color) {
+        var X = 15 + x,
+            Y = 15 + y;
+        canvas.beginPath();
+        canvas.arc(X, Y, 12, 0, 2 * Math.PI);
+        canvas.closePath();
+        var gradient = cb.createRadialGradient(X, Y, 10, X + 2, Y - 2, 0);
+        if (chess_color) {
+            gradient.addColorStop(0, "#0a0a0a");
+            gradient.addColorStop(1, "#636363");
+        } else {
+            gradient.addColorStop(0, "#e1e1e1");
+            gradient.addColorStop(1, "#f1f1f1");
+        }
+        canvas.fillStyle = gradient;
+        canvas.fill();
+    }
+
+    function reset() {
+
+        wins = [];
+        count = 0;
+        myWin = [];
+        computerWin = [];
+        (function() {
+            for (var i = 0; i < 19; i += 1) { //创建赢法三维数组；
+                wins[i] = [];
+                for (var j = 0; j < 19; j += 1) {
+                    wins[i][j] = [];
+                }
+            }
+            for (var i = 0; i < 19; i += 1) { //遍历横向赢法数组
+                for (var j = 0; j < 14; j += 1) {
+                    for (var k = 0; k < 5; k += 1) {
+                        wins[i][j + k][count] = true;
+                    }
+                    count++;
+                }
+            }
+            for (var i = 0; i < 19; i += 1) { //遍历纵向赢法数组
+                for (var j = 0; j < 14; j += 1) {
+                    for (var k = 0; k < 5; k += 1) {
+                        wins[j + k][i][count] = true;
+                    }
+                    count++;
+                }
+            }
+            for (var i = 0; i < 14; i += 1) { //遍历反斜向赢法数组
+                for (var j = 0; j < 14; j += 1) {
+                    for (var k = 0; k < 5; k += 1) {
+                        wins[i + k][j + k][count] = true;
+                    }
+                    count++;
+                }
+            }
+            for (var i = 4; i < 19; i += 1) { //遍历斜向赢法数组
+                for (var j = 0; j < 14; j += 1) {
+                    for (var k = 0; k < 5; k += 1) {
+                        wins[i - k][j + k][count] = true;
+                    }
+                    count++;
+                }
+            }
+            for (var i = 0; i < count; i++) { //初始化数组；
+                myWin[i] = 0;
+                computerWin[i] = 0
+            }
+        })();
+        cp.clearRect(0, 0, 570, 570); // 清空落子   
+        game_over = false;
+        p2_chose = false;
+        for (var i = 0; i < 19; i++) { // 初始化棋盘数组
+            chessBoard[i] = [];
+            for (var j = 0; j < 19; j++) {
+                chessBoard[i][j] = 0;
+            }
+        }
+        before_game.style.display = "block";
+        after_game.style.display = "none";
+        bf.rect(15, 15, 540, 540);
+        bf.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        bf.fill();
+        var x = 285;
+        var y = 285;
+        bf.font = "normal 45px 微软雅黑";
+        bf.fillStyle = 'rgba(255, 255, 255, 0.9)';
+        bf.fillText("选择对手", x - 90, y - 60);
+        bf.font = "normal 15px 微软雅黑";
+        var man_png = "data:image/png;base64,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";
+        var com_png = "data:image/png;base64,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";
+        loadImage(bf, x + -30 - 15, y - 15, man_png);
+        loadImage(bf, x + 30 - 15, y - 15, com_png);
+    }
+    </script>
+</body>
+
+</html>

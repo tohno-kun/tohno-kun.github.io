@@ -4,32 +4,27 @@ html {
     text-align: center;
 }
 
-h6 {
-    margin-top: 10px;
+h2 {
+    margin-top: 35px;
+}
+
+h5 {
+    margin-top: 40px;
     margin-bottom: 10px;
+    opacity: 0.6;
 }
 
-#download-json {
-    padding-top: 10px;
-    width: 600px;
-    margin: 50px auto 0 auto;
+a:link {
+    color: #000000;
+    /*text-decoration: none;*/
 }
 
-#download-json button {
-	margin-right: 10px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: bold;
-    line-height: 25px;
-    border: 0;
-    border-radius: 10px;
-    cursor: pointer;
-    background-color: white;
-    text-align: center;
-    outline:none;
+a:visited {
+    color: #000000;
+    /*text-decoration: none;*/
 }
 
-#download-json button:hover {
-    color: #f5f5f5;
-    background-color: #00a1d6
+a:hover {
+    color: #00a1d6;
+    text-decoration: none;
 }
